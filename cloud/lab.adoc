@@ -135,7 +135,7 @@ Next we'll update the configuration dynamically without shutting down the applic
 . Using cURL (or some other REST testing utility), POST the following request:
 +
 ----
-$ curl -X POST http://localhost:8888/bus/refresh
+$ curl -X POST http://localhost:8080/bus/refresh
 ----
 
 . Visit `http://localhost:8080` in your browser. You should see your new greeting:
