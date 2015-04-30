@@ -1,0 +1,161 @@
+= Spring Cloud Labs
+
+In this set of labs we're going to explore various features of Spring Cloud. The complete code for this set of labs can be found in `$WORKSHOP_HOME/cloud/complete`.
+
+== Setup
+
+. Import `$WORKSHOP_HOME/cloud/initial/spring-cloud-labs/pom.xml` to your IDE.
+
+== Config Server
+
+. In the `config-server` subproject, add a `@EnableConfigServer` annotation to `io.pivotal.springcloud.configserver.ConfigServerApplication`.
+
+. Create the file `src/main/resources/application.yml`.
+
+. Paste the following into `application.yml`:
++
+----
+server:
+  port: 8888
+
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/mstine/config-repo.git
+----
+
+. Create your own Git repo (in GitHub or Stash) and add the contents of `https://github.com/mstine/config-repo.git`. Use that repo instead of the one pasted.
+
+. Run the application (IDE or Command Line using `java -jar`).
+
+. Visit `http://localhost:8888/demo/default` in your browser. You should see the following:
++
+----
+{
+    "label": "master",
+    "name": "demo",
+    "profiles": [
+        "default"
+    ],
+    "propertySources": [
+        {
+            "name": "https://github.com/mstine/config-repo.git/demo.yml",
+            "source": {
+                "greeting": "Bonjour"
+            }
+        },
+        {
+            "name": "https://github.com/mstine/config-repo.git/application.yml",
+            "source": {
+                "eureka.client.serviceUrl.defaultZone": "${vcap.services.service-registry.credentials.uri:http://127.0.0.1:8761}/eureka/",
+                "eureka.instance.leaseRenewalIntervalInSeconds": 10,
+                "eureka.instance.metadataMap.instanceId": "${vcap.application.instance_id:${spring.application.name}:${server.port:8080}}"
+            }
+        }
+    ]
+}
+----
+
+== Testing the Config Server
+
+. Run a local instance of RabbitMQ. We'll use this later.
+
+. In the `dist-config` subproject, create the class `io.pivotal.springcloud.distconfig.Greeter`. Paste into it the following code:
++
+----
+@Component
+@RefreshScope
+public class Greeter {
+
+    @Value("${greeting}")
+    private String greeting;
+
+    public String getGreeting() {
+        return greeting;
+    }
+}
+----
+
+. Add a `@RestController` annotation to `io.pivotal.springcloud.distconfig.DistConfigApplication`.
+
+. Autowire in a greeter bean:
++
+----
+@Autowired
+private Greeter greeter;
+----
+
+. Add a request handler:
++
+----
+@RequestMapping("/")
+public String home() {
+    return String.format("%s World!", greeter.getGreeting());
+}
+----
+
+. Create the file `src/main/resources/application.yml`. Into it paste the following:
++
+----
+greeting: Hello
+
+---
+
+spring:
+  profiles: spanish
+greeting: Hola
+----
+
+. Create the file `src/main/resources/bootstrap.yml`. Into it paste the following:
++
+----
+spring:
+  application:
+    name: demo
+----
++
+This bootstrap configuration tells the Config Server the name of the application so that the appropriate config can be served.
+
+. Run the application (IDE or Command Line using `java -jar`).
+
+. Visit `http://localhost:8080` in your browser. You should see the following:
++
+----
+Bonjour World!
+----
+
+== Testing the Cloud Bus
+
+Next we'll update the configuration dynamically without shutting down the application.
+
+. Modify the `greeting` property in `application.yml` in your Git repo to some new value, the commit and push.
+
+. Using cURL (or some other REST testing utility), POST the following request:
++
+----
+$ curl -X POST http://localhost:8888/bus/refresh
+----
+
+. Visit `http://localhost:8080` in your browser. You should see your new greeting:
++
+----
+Guten Tag World!
+----
+
+== Eureka
+
+== Producer
+
+== A Eureka-Client Consumer
+
+== A Ribbon Consumer
+
+== A Ribbon-enhanced RestTemplate Consumer
+
+== A Feign Consumer
+
+== A Fault Tolerant Consumer with Hystrix
+
+== Monitoring the Hystrix Dashboard
