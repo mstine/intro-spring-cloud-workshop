@@ -146,7 +146,7 @@ Guten Tag World!
 
 == Eureka
 
-. In the `eureka` subproject, add a `@EnableEurekaServer` annotation to `io.pivotal.springcloud.configserver.EurekaApplication`.
+. In the `eureka` subproject, add a `@EnableEurekaServer` annotation to `io.pivotal.springcloud.eureka.EurekaApplication`.
 
 . Create the file `src/main/resources/application.yml`.
 
@@ -170,9 +170,9 @@ eureka:
 
 == Producer
 
-. In the `producer` subproject, add  `@EnableDiscoveryClient` and `@RestController` annotations to `io.pivotal.springcloud.configserver.ProducerApplication`.
+. In the `producer` subproject, add  `@EnableDiscoveryClient` and `@RestController` annotations to `io.pivotal.springcloud. producer.ProducerApplication`.
 
-. Paste the following additional code into `io.pivotal.springcloud.configserver.ProducerApplication`:
+. Paste the following additional code into `io.pivotal.springcloud.producer.ProducerApplication`:
 +
 ----
 private Log log = LogFactory.getLog(ProducerApplication.class);
@@ -187,13 +187,86 @@ public String produce() {
 }
 ----
 
-. Run two instances of the application (IDE or Command Line using `java -jar`). The first can be run with no additional configuration, and will end up on port 8080. For the second, set an environment variable `SERVER_PORT=8081` when running the app.
+. Create the file `src/main/resources/application.yml`. Into it paste the following:
++
+----
+server:
+  port: 8080
+----
+
+. Create the file `src/main/resources/bootstrap.yml`. Into it paste the following:
++
+----
+spring:
+  application:
+    name: producer
+----
+
+. Run two instances of the application (IDE or Command Line using `java -jar`). The first can be run with no additional configuration, and will end up on port 8080. For the second, set an environment variable `SERVER_PORT=8081` when running the app. Ideally you should run these in two separate terminal windows so that you can watch their logs simultaneously.
 
 . After the apps have been running for 10 seconds each, refresh the Eureka UI. You should see both instances registered.
 
 == A Eureka-Client Consumer
 
-TODO
+. In the `consumer` subproject, create the class `io.pivotal.springcloud.consumer.ProducerResponse.` Into it paste the following:
++
+----
+private int value;
+
+public int getValue() {
+    return value;
+}
+
+public void setValue(int value) {
+    this.value = value;
+}
+----
+
+. Add `@EnableDiscoveryClient` and `@RestController` annotations to the class `io.pivotal.springcloud.consumer.ConsumerApplication`.
+
+. Paste the following into `io.pivotal.springcloud.consumer.ConsumerApplication`:
++
+----
+@Autowired
+private DiscoveryClient discoveryClient;
+
+@RequestMapping("/")
+public String consume() {
+    InstanceInfo instance = discoveryClient.getNextServerFromEureka("PRODUCER", false);
+
+    RestTemplate restTemplate = new RestTemplate();
+    ProducerResponse response = restTemplate.getForObject(instance.getHomePageUrl(), ProducerResponse.class);
+
+    return String.format("{\"value\": %s}", response.getValue());
+}
+----
+
+. Create the file `src/main/resources/application.yml`. Into it paste the following:
++
+----
+server:
+  port: 8082
+----
+
+. Create the file `src/main/resources/bootstrap.yml`. Into it paste the following:
++
+----
+spring:
+  application:
+    name: consumer
+----
+
+. Run the application (IDE or Command Line using `java -jar`).
+
+. Visit `http://localhost:8082` in your browser. You should see the following:
++
+----
+{
+  "value" : 1
+}
+----
++
+Refresh the page several times. You should see the consumer perform round robin load balancing across the two producer instances.
 
 == A Ribbon Consumer
 

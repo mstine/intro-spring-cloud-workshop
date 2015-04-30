@@ -628,7 +628,7 @@ greeting: Hola</pre>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>In the <code>eureka</code> subproject, add a <code>@EnableEurekaServer</code> annotation to <code>io.pivotal.springcloud.configserver.EurekaApplication</code>.</p>
+<p>In the <code>eureka</code> subproject, add a <code>@EnableEurekaServer</code> annotation to <code>io.pivotal.springcloud.eureka.EurekaApplication</code>.</p>
 </li>
 <li>
 <p>Create the file <code>src/main/resources/application.yml</code>.</p>
@@ -665,10 +665,10 @@ eureka:
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>In the <code>producer</code> subproject, add  <code>@EnableDiscoveryClient</code> and <code>@RestController</code> annotations to <code>io.pivotal.springcloud.configserver.ProducerApplication</code>.</p>
+<p>In the <code>producer</code> subproject, add  <code>@EnableDiscoveryClient</code> and <code>@RestController</code> annotations to <code>io.pivotal.springcloud. producer.ProducerApplication</code>.</p>
 </li>
 <li>
-<p>Paste the following additional code into <code>io.pivotal.springcloud.configserver.ProducerApplication</code>:</p>
+<p>Paste the following additional code into <code>io.pivotal.springcloud.producer.ProducerApplication</code>:</p>
 <div class="listingblock">
 <div class="content">
 <pre>private Log log = LogFactory.getLog(ProducerApplication.class);
@@ -685,7 +685,26 @@ public String produce() {
 </div>
 </li>
 <li>
-<p>Run two instances of the application (IDE or Command Line using <code>java -jar</code>). The first can be run with no additional configuration, and will end up on port 8080. For the second, set an environment variable <code>SERVER_PORT=8081</code> when running the app.</p>
+<p>Create the file <code>src/main/resources/application.yml</code>. Into it paste the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>server:
+  port: 8080</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create the file <code>src/main/resources/bootstrap.yml</code>. Into it paste the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>spring:
+  application:
+    name: producer</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Run two instances of the application (IDE or Command Line using <code>java -jar</code>). The first can be run with no additional configuration, and will end up on port 8080. For the second, set an environment variable <code>SERVER_PORT=8081</code> when running the app. Ideally you should run these in two separate terminal windows so that you can watch their logs simultaneously.</p>
 </li>
 <li>
 <p>After the apps have been running for 10 seconds each, refresh the Eureka UI. You should see both instances registered.</p>
@@ -697,8 +716,82 @@ public String produce() {
 <div class="sect1">
 <h2 id="_a_eureka_client_consumer">A Eureka-Client Consumer</h2>
 <div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the <code>consumer</code> subproject, create the class <code>io.pivotal.springcloud.consumer.ProducerResponse.</code> Into it paste the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>private int value;
+
+public int getValue() {
+    return value;
+}
+
+public void setValue(int value) {
+    this.value = value;
+}</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Add <code>@EnableDiscoveryClient</code> and <code>@RestController</code> annotations to the class <code>io.pivotal.springcloud.consumer.ConsumerApplication</code>.</p>
+</li>
+<li>
+<p>Paste the following into <code>io.pivotal.springcloud.consumer.ConsumerApplication</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre>@Autowired
+private DiscoveryClient discoveryClient;
+
+@RequestMapping("/")
+public String consume() {
+    InstanceInfo instance = discoveryClient.getNextServerFromEureka("PRODUCER", false);
+
+    RestTemplate restTemplate = new RestTemplate();
+    ProducerResponse response = restTemplate.getForObject(instance.getHomePageUrl(), ProducerResponse.class);
+
+    return String.format("{\"value\": %s}", response.getValue());
+}</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create the file <code>src/main/resources/application.yml</code>. Into it paste the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>server:
+  port: 8082</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create the file <code>src/main/resources/bootstrap.yml</code>. Into it paste the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>spring:
+  application:
+    name: consumer</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Run the application (IDE or Command Line using <code>java -jar</code>).</p>
+</li>
+<li>
+<p>Visit <code><a href="http://localhost:8082" class="bare">http://localhost:8082</a></code> in your browser. You should see the following:</p>
+<div class="listingblock">
+<div class="content">
+<pre>{
+  "value" : 1
+}</pre>
+</div>
+</div>
 <div class="paragraph">
-<p>TODO</p>
+<p>Refresh the page several times. You should see the consumer perform round robin load balancing across the two producer instances.</p>
+</div>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -745,7 +838,7 @@ public String produce() {
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2015-04-30 08:03:13 EDT
+Last updated 2015-04-30 08:11:56 EDT
 </div>
 </div>
 </body>
