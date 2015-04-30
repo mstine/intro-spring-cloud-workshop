@@ -130,7 +130,7 @@ Bonjour World!
 
 Next we'll update the configuration dynamically without shutting down the application.
 
-. Modify the `greeting` property in `application.yml` in your Git repo to some new value, the commit and push.
+. Modify the `greeting` property in `demo.yml` in your Git repo to some new value, the commit and push.
 
 . Using cURL (or some other REST testing utility), POST the following request:
 +
