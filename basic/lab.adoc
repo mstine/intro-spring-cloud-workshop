@@ -1,0 +1,112 @@
+= Basic Spring Boot Config Lab
+
+In this lab we're going to understand the basics of how the Spring configuration model works in Spring Boot. The complete code for this laboratory can be found in `$WORKSHOP_HOME/basic/complete`.
+
+== Setup
+
+. Import `$WORKSHOP_HOME/basic/initial` to your IDE.
+
+== Complete the Code
+
+. Perform the following steps in `io.pivotal.springcloud.basicconfig.BasicConfigApplication`:
+
+.. Add a `@RestController` annotation to the class.
+
+.. Add a `greeting` property with an injected value:
++
+[source, java]
+----
+@Value("${greeting}")
+private String greeting;
+----
+
+.. Add a request handler:
++
+[source, java]
+----
+@RequestMapping("/")
+public String home() {
+    return String.format("%s World!", greeting);
+}
+----
+
+. Next, rename `src/main/resources/application.properties` to `application.yml`.
+
+. Paste the following into `application.yml`:
++
+----
+greeting: Hello
+
+---
+
+spring:
+  profiles: spanish
+greeting: Hola
+----
+
+== Run the Application
+
+. Either:
+
+.. run the application within the IDE, or
+.. build from the command line using `mvn package`, then run the app from the command line using `java -jar target/basic-config-0.0.1-SNAPSHOT.jar`.
+
+. Visit the application in your browser or use cURL. Hit `http://localhost:8080`. You should see the following:
++
+----
+Hello World!
+----
+
+== Override with Environment Variables
+
+Spring Boot provides a priority order around configuration sources:
+
+. Command Line Args
+. JNDI
+. Java System Properties
+. OS Environment Variables
+. Properties Files
+. `@PropertySource`
+. Defaults
+
+We're going to test this out by setting an environment variable.
+
+. Run the app again from the command line as shown:
+
+----
+$ GREETING=Ohai java -jar target/basic-config-0.0.1-SNAPSHOT.jar
+----
+
+. Visit the application in your browser or use cURL. Hit `http://localhost:8080`. You should see the following:
++
+----
+Ohai World!
+----
+
+== Spring Profiles
+
+The Spring Profile abstraction allows me to turn sets of configuration on or off. When you populated `application.yml`, you actually set up two profiles: `default` and `spanish`.
+
+Let's turn on the `spanish` profile and see how it affects things.
+
+. Run the app again from the command line as shown:
+
+----
+$ SPRING_PROFILES_ACTIVE=spanish java -jar target/basic-config-0.0.1-SNAPSHOT.jar
+----
+
+. Visit the application in your browser or use cURL. Hit `http://localhost:8080`. You should see the following:
++
+----
+Hola World!
+----
+
+== BONUS: Who wins?
+
+Run the app again from the command line as shown:
+
+----
+$ GREETING=Ohai SPRING_PROFILES_ACTIVE=spanish java -jar target/basic-config-0.0.1-SNAPSHOT.jar
+----
+
+What will the output be?
