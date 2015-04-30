@@ -4,7 +4,7 @@ In this lab we're going to understand the basics of how the Spring configuration
 
 == Setup
 
-. Import `$WORKSHOP_HOME/basic/initial` to your IDE.
+. Import `$WORKSHOP_HOME/basic/initial/basic-config/pom.xml` to your IDE.
 
 == Complete the Code
 
