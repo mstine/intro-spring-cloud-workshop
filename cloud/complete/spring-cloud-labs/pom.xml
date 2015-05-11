@@ -21,6 +21,7 @@
         <module>consumer-feign</module>
         <module>consumer-hystrix</module>
         <module>hystrix-dashboard</module>
+        <module>zuul</module>
     </modules>
 
     <parent>
