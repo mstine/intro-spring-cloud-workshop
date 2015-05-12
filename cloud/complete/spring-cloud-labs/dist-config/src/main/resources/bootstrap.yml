@@ -9,4 +9,5 @@ spring:
   cloud:
     config:
       uri: http://config-server.52.5.229.248.xip.io/
-
+  application:
+    index: ${instance.index}
